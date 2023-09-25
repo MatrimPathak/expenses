@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "859081960247",
+    "project_id": "expenses-metro",
+    "storage_bucket": "expenses-metro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:859081960247:android:f0c1300f77e2f4e2c588b2",
+        "android_client_info": {
+          "package_name": "com.matrimpathak.expenses"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFwpukN6MK34bXGZGC40SSNLGoAhx9_O4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

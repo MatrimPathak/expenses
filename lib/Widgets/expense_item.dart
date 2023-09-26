@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../Screen/screens.dart';
+import '../theme_provider.dart';
 
 class ExpenseItem extends StatelessWidget {
   final String name;
   final String category;
   final String date;
-  final int amount;
+  final String amount;
   final bool isExpense;
+  final String notes;
   const ExpenseItem({
     super.key,
     this.isExpense = true,
@@ -15,6 +19,7 @@ class ExpenseItem extends StatelessWidget {
     required this.amount,
     required this.category,
     required this.date,
+    required this.notes,
   });
 
   IconData getIcon() {
@@ -61,7 +66,7 @@ class ExpenseItem extends StatelessWidget {
               date: date,
               isExpense: isExpense,
               iconData: getIcon(),
-              notes: "",
+              notes: notes,
             ),
           ),
         );
@@ -71,23 +76,35 @@ class ExpenseItem extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(20),
         ),
-        margin: const EdgeInsets.symmetric(
-          vertical: 5,
-        ),
+        // margin: const EdgeInsets.symmetric(horizontal: 20),
         padding: const EdgeInsets.all(20),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               decoration: BoxDecoration(
-                color: isExpense ? Colors.red[100] : Colors.green[100],
+                color: Provider.of<ThemeProvider>(context).themeMode ==
+                        ThemeMode.dark
+                    ? isExpense
+                        ? Colors.red[100]
+                        : Colors.green[100]
+                    : isExpense
+                        ? Colors.red[700]
+                        : Colors.green[700],
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(20),
               margin: const EdgeInsets.only(right: 10),
               child: Icon(
                 getIcon(),
-                color: isExpense ? Colors.red[700] : Colors.green[700],
+                color: Provider.of<ThemeProvider>(context).themeMode ==
+                        ThemeMode.dark
+                    ? isExpense
+                        ? Colors.red[700]
+                        : Colors.green[700]
+                    : isExpense
+                        ? Colors.red[100]
+                        : Colors.green[100],
               ),
             ),
             Expanded(

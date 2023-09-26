@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../theme_provider.dart';
 
 class TransactionScreen extends StatelessWidget {
   final String title;
-  final int amount;
+  final String amount;
   final bool isExpense;
   final String category;
   final String date;
@@ -47,8 +51,7 @@ class TransactionScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color:
-                    Theme.of(context).colorScheme.surfaceVariant,
+                color: Theme.of(context).colorScheme.surfaceVariant,
               ),
               width: double.infinity,
               child: Column(
@@ -59,12 +62,26 @@ class TransactionScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(30),
                       decoration: BoxDecoration(
-                          color:
-                              isExpense ? Colors.red[100] : Colors.green[100],
-                          borderRadius: BorderRadius.circular(20)),
+                        color: Provider.of<ThemeProvider>(context).themeMode ==
+                                ThemeMode.dark
+                            ? isExpense
+                                ? Colors.red[100]
+                                : Colors.green[100]
+                            : isExpense
+                                ? Colors.red[700]
+                                : Colors.green[700],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Icon(
                         iconData,
-                        color: isExpense ? Colors.red[700] : Colors.green[700],
+                        color: Provider.of<ThemeProvider>(context).themeMode ==
+                                ThemeMode.dark
+                            ? isExpense
+                                ? Colors.red[700]
+                                : Colors.green[700]
+                            : isExpense
+                                ? Colors.red[100]
+                                : Colors.green[100],
                         size: 50,
                       ),
                     ),
@@ -72,7 +89,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "TITLE",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     title,
@@ -81,7 +99,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "AMOUNT",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     "₹ $amount",
@@ -90,7 +109,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "TRANSACTION TYPE",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     isExpense ? "Expense" : "Income",
@@ -99,7 +119,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "CATEGORY",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     category,
@@ -108,7 +129,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "WHEN",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     date,
@@ -117,7 +139,8 @@ class TransactionScreen extends StatelessWidget {
                   const SizedBox(height: 40),
                   Text(
                     "NOTES",
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     notes == "" ? "-" : notes,

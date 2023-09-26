@@ -1,16 +1,22 @@
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:expenses/Screen/home_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:expenses/Screen/homepage.dart';
+import 'package:expenses/google_sheets_api.dart';
+import 'package:expenses/theme_provider.dart';
+// import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'firebase_options.dart';
+// import 'firebase_options.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  GoogleSheetsAPI().init();
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
   );
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -22,7 +28,7 @@ class MyApp extends StatelessWidget {
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
+        title: 'Expenses - Budget App',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: lightDynamic,
@@ -32,8 +38,8 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
           colorScheme: darkDynamic,
         ),
-        themeMode: ThemeMode.system,
-        home: const HomeScreen(),
+        themeMode: Provider.of<ThemeProvider>(context).themeMode,
+        home: const HomePage(),
       );
     });
   }

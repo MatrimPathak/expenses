@@ -1,7 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+
 import 'package:expenses/Widgets/widgets.dart';
+import 'package:expenses/google_sheets_api.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../theme_provider.dart';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -16,9 +22,10 @@ class _AddScreenState extends State<AddScreen> {
   final TextEditingController notesController = TextEditingController();
   final TextEditingController categoryNameController = TextEditingController();
 
-  String type = "Expense";
+  // String type = "Expense";
+  bool isExpense = true;
   String color = "Red";
-  String category = "Food";
+  String category = GoogleSheetsAPI.currentCategories[0][0];
 
   @override
   void dispose() {
@@ -29,30 +36,23 @@ class _AddScreenState extends State<AddScreen> {
     super.dispose();
   }
 
-  Future<void> addExpense() {
-    return FirebaseFirestore.instance
-        .collection('Expenses')
-        .add({
-          'title': titleController.text.trim(),
-          'amount': amountController.text.trim(),
-          'isExpense': type == "Expense" ? true : false,
-          'notes': notesController.text.trim(),
-          'category': category,
-          'date': Timestamp.now(),
-        })
-        .then((value) => print("Expense Added"))
-        .catchError((error) => print("Failed to add expense: $error"));
+  void _enterTransaction() {
+    GoogleSheetsAPI.insertTransaction(
+      titleController.text.trim(),
+      amountController.text.trim(),
+      isExpense ? "expense" : "income",
+      category,
+      DateFormat('MMM dd, yyyy').format(DateTime.now()),
+      notesController.text.trim(),
+    );
   }
 
-  Future<void> addCategory() {
-    return FirebaseFirestore.instance
-        .collection('Categories')
-        .add({
-          'name': categoryNameController.text.trim(),
-          'color': color,
-        })
-        .then((value) => print("Category Added"))
-        .catchError((error) => print("Failed to add category: $error"));
+  void _enterCategory() {
+    GoogleSheetsAPI.insertCategory(
+      categoryNameController.text.trim(),
+      color,
+    );
+    setState(() {});
   }
 
   IconData getIcon() {
@@ -85,8 +85,22 @@ class _AddScreenState extends State<AddScreen> {
     return itemIcon;
   }
 
+  bool timerHasStarted = false;
+  void startLoading() {
+    timerHasStarted = true;
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (GoogleSheetsAPI.loadingCategories == false) {
+        setState(() {});
+        timer.cancel();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (GoogleSheetsAPI.loadingCategories == true && timerHasStarted == false) {
+      startLoading();
+    }
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
@@ -135,15 +149,28 @@ class _AddScreenState extends State<AddScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(30),
                             decoration: BoxDecoration(
-                                color: type == "Expense"
-                                    ? Colors.red[100]
-                                    : Colors.green[100],
-                                borderRadius: BorderRadius.circular(20)),
+                              color: Provider.of<ThemeProvider>(context)
+                                          .themeMode ==
+                                      ThemeMode.dark
+                                  ? isExpense
+                                      ? Colors.red[100]
+                                      : Colors.green[100]
+                                  : isExpense
+                                      ? Colors.red[700]
+                                      : Colors.green[700],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: Icon(
                               getIcon(),
-                              color: type == "Expense"
-                                  ? Colors.red[700]
-                                  : Colors.green[700],
+                              color: Provider.of<ThemeProvider>(context)
+                                          .themeMode ==
+                                      ThemeMode.dark
+                                  ? isExpense
+                                      ? Colors.red[700]
+                                      : Colors.green[700]
+                                  : isExpense
+                                      ? Colors.red[100]
+                                      : Colors.green[100],
                               size: 50,
                             ),
                           ),
@@ -209,13 +236,17 @@ class _AddScreenState extends State<AddScreen> {
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    type = "Expense";
+                                    isExpense = true;
                                   });
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: type == "Expense"
-                                        ? Colors.red[100]
+                                    color: isExpense
+                                        ? Provider.of<ThemeProvider>(context)
+                                                    .themeMode ==
+                                                ThemeMode.dark
+                                            ? Colors.red[100]
+                                            : Colors.red[700]
                                         : Theme.of(context)
                                             .colorScheme
                                             .onBackground
@@ -227,8 +258,12 @@ class _AddScreenState extends State<AddScreen> {
                                   child: Text(
                                     "Expense",
                                     style: TextStyle(
-                                      color: type == "Expense"
-                                          ? Colors.red[800]
+                                      color: isExpense
+                                          ? Provider.of<ThemeProvider>(context)
+                                                      .themeMode ==
+                                                  ThemeMode.dark
+                                              ? Colors.red[700]
+                                              : Colors.red[100]
                                           : Theme.of(context)
                                               .colorScheme
                                               .onSurface,
@@ -243,13 +278,17 @@ class _AddScreenState extends State<AddScreen> {
                               child: GestureDetector(
                                 onTap: () {
                                   setState(() {
-                                    type = "Income";
+                                    isExpense = false;
                                   });
                                 },
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: type == "Income"
-                                        ? Colors.green[100]
+                                    color: !isExpense
+                                        ? Provider.of<ThemeProvider>(context)
+                                                    .themeMode ==
+                                                ThemeMode.dark
+                                            ? Colors.green[100]
+                                            : Colors.green[700]
                                         : Theme.of(context)
                                             .colorScheme
                                             .surfaceVariant,
@@ -260,8 +299,12 @@ class _AddScreenState extends State<AddScreen> {
                                   child: Text(
                                     "Income",
                                     style: TextStyle(
-                                      color: type == "Income"
-                                          ? Colors.green[800]
+                                      color: !isExpense
+                                          ? Provider.of<ThemeProvider>(context)
+                                                      .themeMode ==
+                                                  ThemeMode.dark
+                                              ? Colors.green[700]
+                                              : Colors.green[100]
                                           : Theme.of(context)
                                               .colorScheme
                                               .onSurfaceVariant,
@@ -312,7 +355,8 @@ class _AddScreenState extends State<AddScreen> {
                                               ),
                                             ),
                                             TextField(
-                                              controller: categoryNameController,
+                                              controller:
+                                                  categoryNameController,
                                               cursorColor: Theme.of(context)
                                                   .colorScheme
                                                   .onSurface,
@@ -481,8 +525,9 @@ class _AddScreenState extends State<AddScreen> {
                                                 Expanded(
                                                   child: GestureDetector(
                                                     onTap: () {
-                                                      addCategory();
+                                                      _enterCategory();
                                                       Navigator.pop(context);
+                                                      setState(() {});
                                                     },
                                                     child: Container(
                                                       decoration: BoxDecoration(
@@ -523,24 +568,20 @@ class _AddScreenState extends State<AddScreen> {
                                   },
                                 ),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 5,
-                                  vertical: 5,
+                              child: Container(
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color:
+                                          Theme.of(context).colorScheme.outline,
+                                      width: 2,
+                                      strokeAlign:
+                                          BorderSide.strokeAlignInside),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outline,
-                                        width: 2,
-                                        strokeAlign:
-                                            BorderSide.strokeAlignInside),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 5),
+                                child: Center(
                                   child: Text(
                                     "Add",
                                     style: TextStyle(
@@ -554,81 +595,45 @@ class _AddScreenState extends State<AddScreen> {
                               ),
                             ),
                             Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            category = "Food";
-                                          });
-                                        },
-                                        child: CategoryItem(
-                                          category: "Food",
-                                          selected:
-                                              category == "Food" ? true : false,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            category = "Travel";
-                                          });
-                                        },
-                                        child: CategoryItem(
-                                          category: "Travel",
-                                          selected: category == "Travel"
-                                              ? true
-                                              : false,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            category = "Personal";
-                                          });
-                                        },
-                                        child: CategoryItem(
-                                          category: "Personal",
-                                          selected: category == "Personal"
-                                              ? true
-                                              : false,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            category = "Groceries";
-                                          });
-                                        },
-                                        child: CategoryItem(
-                                          category: "Groceries",
-                                          selected: category == "Groceries"
-                                              ? true
-                                              : false,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            category = "Games";
-                                          });
-                                        },
-                                        child: CategoryItem(
-                                          category: "Games",
-                                          selected: category == "Games"
-                                              ? true
-                                              : false,
-                                        ),
-                                      ),
-                                    ],
+                              child: Padding(
+                                padding: EdgeInsets.all(10),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    height: 45,
+                                    child: ListView.separated(
+                                      separatorBuilder: (context, index) {
+                                        return SizedBox(width: 10);
+                                      },
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: GoogleSheetsAPI
+                                          .currentCategories.length,
+                                      itemBuilder:
+                                          (BuildContext context, int index) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              category = GoogleSheetsAPI
+                                                  .currentCategories[index][0];
+                                            });
+                                          },
+                                          child: CategoryItem(
+                                            category: GoogleSheetsAPI
+                                                .currentCategories[index][0],
+                                            selected: category ==
+                                                    GoogleSheetsAPI
+                                                            .currentCategories[
+                                                        index][0]
+                                                ? true
+                                                : false,
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            )
                           ],
                         ),
                         const SizedBox(height: 40),
@@ -689,7 +694,7 @@ class _AddScreenState extends State<AddScreen> {
           ),
           GestureDetector(
             onTap: () {
-              addExpense();
+              _enterTransaction();
               Navigator.pop(context);
             },
             child: Container(
@@ -697,8 +702,9 @@ class _AddScreenState extends State<AddScreen> {
               margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
               width: double.infinity,
               decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(20)),
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Text(
                 "Add New Transaction",
                 textAlign: TextAlign.center,
